@@ -1,12 +1,16 @@
 defmodule DiscussWeb.Router do
   use DiscussWeb, :router
 
+  alias DiscussWeb.Plugs.SetUser
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_flash
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug Ueberauth
+    plug SetUser
   end
 
   pipeline :api do
@@ -16,10 +20,16 @@ defmodule DiscussWeb.Router do
   scope "/", DiscussWeb do
     pipe_through :browser
 
-    get "/", TopicController, :index
-    get "/topics/new", TopicController, :new
+    resources "/", TopicController
+  end
 
-    post "/topics", TopicController, :create
+  scope "/auth", DiscussWeb do
+    pipe_through :browser
+
+    get "/github", AuthController, :request
+    get "/github/callback", AuthController, :callback
+
+    get "/signout", AuthController, :signout
   end
 
   # Other scopes may use custom stacks.
